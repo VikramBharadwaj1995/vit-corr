@@ -19,6 +19,8 @@ from COTR.options.options_utils import *
 
 utils.fix_randomness(0)
 
+import warnings
+warnings.filterwarnings("ignore")
 
 def train(opt):
     pprint.pprint(dict(os.environ), width=1)
