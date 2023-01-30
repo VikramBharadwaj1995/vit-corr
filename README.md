@@ -1,134 +1,52 @@
 # Visual Correspondence using Vision Transformers
-A simple and well designed structure is essential for any Deep Learning project, so after a lot practice and contributing in pytorch projects here's a pytorch project template that combines **simplicity, best practice for folder structure** and **good OOP design**. 
-The main idea is that there's much same stuff you do every time when you start your pytorch project, so wrapping all this shared stuff will help you to change just the core idea every time you start a new pytorch project. 
+In this project we explore the use of vision transformers for the task of visual correspondence in image pairs.
+We propose a novel architecture, which is an improvement on top of the original architecture proposed in COTR(ICCV 2021).
 
-**So, here’s a simple pytorch template that help you get into your main project faster and just focus on your core (Model Architecture, Training Flow, etc)**
+##  Training
 
-In order to decrease repeated stuff, we recommend to use a high-level library. You can write your own high-level library or you can just use some third-part libraries such as [ignite](https://github.com/pytorch/ignite), [fastai](https://github.com/fastai/fastai), [mmcv](https://github.com/open-mmlab/mmcv) … etc. This can help you write compact but full-featured training loops in a few lines of code. Here we use ignite to train mnist as an example.
+### 1. Prepare data
 
-# Requirements
-- [yacs](https://github.com/rbgirshick/yacs) (Yet Another Configuration System)
-- [PyTorch](https://pytorch.org/) (An open source deep learning platform) 
-- [ignite](https://github.com/pytorch/ignite) (High-level library to help with training neural networks in PyTorch)
+See `prepare_data.md`.
 
-# Table Of Contents
--  [In a Nutshell](#in-a-nutshell)
--  [In Details](#in-details)
--  [Future Work](#future-work)
--  [Contributing](#contributing)
--  [Acknowledgments](#acknowledgments)
+### 2. Setup configuration json
 
-# In a Nutshell   
-In a nutshell here's how to use this template, so **for example** assume you want to implement ResNet-18 to train mnist, so you should do the following:
-- In `modeling`  folder create a python file named whatever you like, here we named it `example_model.py` . In `modeling/__init__.py` file, you can build a function named `build_model` to call your model
+Add an entry inside `COTR/global_configs/dataset_config.json`, make sure it is correct on your system. In the provided `dataset_config.json`, we have different configurations for different clusters.
 
-```python
-from .example_model import ResNet18
+Explanations on some json parameters:
 
-def build_model(cfg):
-    model = ResNet18(cfg.MODEL.NUM_CLASSES)
-    return model
-``` 
+`valid_list_json`: The valid list json file, see `2. Valid list` in `Scripts to generate dataset`.
 
-   
-- In `engine`  folder create a model trainer function and inference function. In trainer function, you need to write the logic of the training process, you can use some third-party library to decrease the repeated stuff.
+`train_json/val_json/test_json`:  The splits json files, see  `3. Train/val/test split` in `Scripts to generate dataset`.
 
-```python
-# trainer
-def do_train(cfg, model, train_loader, val_loader, optimizer, scheduler, loss_fn):
- """
- implement the logic of epoch:
- -loop on the number of iterations in the config and call the train step
- -add any summaries you want using the summary
- """
-pass
+`scene_dir`: Path to Megadepth SfM folder(rectified ones!). `{0}{1}` are scene and sequence id used by f-string.
 
-# inference
-def inference(cfg, model, val_loader):
-"""
-implement the logic of the train step
-- run the tensorflow session
-- return any metrics you need to summarize
- """
-pass
-```
+`image_dir/depth_dir`: Path to images and depth maps of Megadepth.
 
-- In `tools`  folder, you create the `train.py` .  In this file, you need to get the instances of the following objects "Model",  "DataLoader”, “Optimizer”, and config
-```python
-# create instance of the model you want
-model = build_model(cfg)
+### 3. Example command
 
-# create your data generator
-train_loader = make_data_loader(cfg, is_train=True)
-val_loader = make_data_loader(cfg, is_train=False)
+```python train_cotr.py --scene_file sample_data/jsons/debug_megadepth.json  --dataset_name=megadepth --info_level=rgbd --use_ram=no --batch_size=2 --lr_backbone=1e-4 --max_iter=200 --valid_iter=10 --workers=4 --confirm=no```
 
-# create your model optimizer
-optimizer = make_optimizer(cfg, model)
-```
+**Important arguments:**
 
-- Pass the all these objects to the function `do_train` , and start your training
-```python
-# here you train your model
-do_train(cfg, model, train_loader, val_loader, optimizer, None, F.cross_entropy)
-```
+`use_ram`: Set to "yes" to load data into main memory.
 
-**You will find a template file and a simple example in the model and trainer folder that shows you how to try your first model simply.**
+`crop_cam`: How to crop the image, it will change the camera intrinsic accordingly.
 
+`scene_file`: The sequence control file.
 
-# In Details
-```
-├──  config
-│    └── defaults.py  - here's the default config file.
-│
-│
-├──  configs  
-│    └── train_mnist_softmax.yml  - here's the specific config file for specific model or dataset.
-│ 
-│
-├──  data  
-│    └── datasets  - here's the datasets folder that is responsible for all data handling.
-│    └── transforms  - here's the data preprocess folder that is responsible for all data augmentation.
-│    └── build.py  		   - here's the file to make dataloader.
-│    └── collate_batch.py   - here's the file that is responsible for merges a list of samples to form a mini-batch.
-│
-│
-├──  engine
-│   ├── trainer.py     - this file contains the train loops.
-│   └── inference.py   - this file contains the inference process.
-│
-│
-├── layers              - this folder contains any customed layers of your project.
-│   └── conv_layer.py
-│
-│
-├── modeling            - this folder contains any model of your project.
-│   └── example_model.py
-│
-│
-├── solver             - this folder contains optimizer of your project.
-│   └── build.py
-│   └── lr_scheduler.py
-│   
-│ 
-├──  tools                - here's the train/test model of your project.
-│    └── train_net.py  - here's an example of train model that is responsible for the whole pipeline.
-│ 
-│ 
-└── utils
-│    ├── logger.py
-│    └── any_other_utils_you_need
-│ 
-│ 
-└── tests					- this foler contains unit test of your project.
-     ├── test_data_sampler.py
-```
+`suffix`: Give the model a unique suffix.
 
+`load_weights`: Load a pretrained weights, only need the model name, it will automatically find the folder with the same name under the output folder, and load the "checkpoint.pth.tar".
 
-# Future Work
+### 4. Our training commands
 
-# Contributing
-Any kind of enhancement or contribution is welcomed.
+As stated in the paper, we have 3 training stages. The machine we used has 1 RTX 3090, i7-10700, and 128G RAM. We store the training data inside the main memory during the first two stages.
 
+Stage 1: `python train_cotr.py --scene_file sample_data/jsons/200_megadepth.json --info_level=rgbd --use_ram=yes --use_cc=no --batch_size=24 --learning_rate=1e-4 --lr_backbone=0 --max_iter=300000 --workers=8 --cycle_consis=yes --bidirectional=yes --position_embedding=lin_sine --layer=layer3 --confirm=no --dataset_name=megadepth_sushi --suffix=stage_1 --valid_iter=1000 --enable_zoom=no --crop_cam=crop_center_and_resize --out_dir=./out/cotr`
+
+Stage 2: `python train_cotr.py --scene_file sample_data/jsons/200_megadepth.json --info_level=rgbd --use_ram=yes --use_cc=no --batch_size=16 --learning_rate=1e-4 --lr_backbone=1e-5 --max_iter=2000000 --workers=8 --cycle_consis=yes --bidirectional=yes --position_embedding=lin_sine --layer=layer3 --confirm=no --dataset_name=megadepth_sushi --suffix=stage_2 --valid_iter=10000 --enable_zoom=no --crop_cam=crop_center_and_resize --out_dir=./out/cotr --load_weights=model:cotr_resnet50_layer3_1024_dset:megadepth_sushi_bs:24_pe:lin_sine_lrbackbone:0.0_suffix:stage_1`
+
+Stage 3: `python train_cotr.py --scene_file sample_data/jsons/200_megadepth.json --info_level=rgbd --use_ram=no --use_cc=no --batch_size=16 --learning_rate=1e-4 --lr_backbone=1e-5 --max_iter=300000 --workers=8 --cycle_consis=yes --bidirectional=yes --position_embedding=lin_sine --layer=layer3 --confirm=no --dataset_name=megadepth_sushi --suffix=stage_3 --valid_iter=2000 --enable_zoom=yes --crop_cam=no_crop --out_dir=./out/cotr --load_weights=model:cotr_resnet50_layer3_1024_dset:megadepth_sushi_bs:16_pe:lin_sine_lrbackbone:1e-05_suffix:stage_2`
 
 # Acknowledgments
 I thank Dr.Huaizu Jiang for helping me throughout the project.
