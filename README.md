@@ -38,7 +38,7 @@ Explanations on some json parameters:
 
 `load_weights`: Load a pretrained weights, only need the model name, it will automatically find the folder with the same name under the output folder, and load the "checkpoint.pth.tar".
 
-### 4. Our training commands
+### 4. Training commands
 
 As stated in the paper, we have 3 training stages. The machine we used has 1 RTX 3090, i7-10700, and 128G RAM. We store the training data inside the main memory during the first two stages.
 
@@ -48,5 +48,31 @@ Stage 2: `python train_cotr.py --scene_file sample_data/jsons/200_megadepth.json
 
 Stage 3: `python train_cotr.py --scene_file sample_data/jsons/200_megadepth.json --info_level=rgbd --use_ram=no --use_cc=no --batch_size=16 --learning_rate=1e-4 --lr_backbone=1e-5 --max_iter=300000 --workers=8 --cycle_consis=yes --bidirectional=yes --position_embedding=lin_sine --layer=layer3 --confirm=no --dataset_name=megadepth_sushi --suffix=stage_3 --valid_iter=2000 --enable_zoom=yes --crop_cam=no_crop --out_dir=./out/cotr --load_weights=model:cotr_resnet50_layer3_1024_dset:megadepth_sushi_bs:16_pe:lin_sine_lrbackbone:1e-05_suffix:stage_2`
 
+### 3. Single image pair demo
+
+Example sparse output:
+
+<p align="center">
+  <img src="./our_model_zoom_lake.png" height="400">
+</p>
+
+### 4. Facial landmarks demo
+
+`python demo_face.py --load_weights="default"`
+
+Example:
+
+<p align="center">
+  <img src="./output_cotr_face_our_model.jpg" height="200">
+</p>
+
+### 5. Guided matching demo
+
+`python demo_guided_matching.py --load_weights="default"`
+
+<p align="center">
+  <img src="./guided_electro_our_model.png" height="400">
+</p>
+
 # Acknowledgments
-I thank Dr.Huaizu Jiang for helping me throughout the project.
+This work was part of my master's project I had the opportunity to pursue under Prof. Huaizu Jiang. I thank Dr. Huaizu Jiang for guiding me throughout the project.
